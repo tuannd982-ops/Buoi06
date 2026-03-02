@@ -1,98 +1,153 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet
+} from 'react-native';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  // Format số điện thoại
+  const formatPhone = (text) => {
+    const onlyNumber = text.replace(/[^0-9]/g, '');
+
+    if (onlyNumber.length <= 3) return onlyNumber;
+
+    if (onlyNumber.length <= 6)
+      return onlyNumber.slice(0, 3) + ' ' + onlyNumber.slice(3);
+
+    if (onlyNumber.length <= 8)
+      return (
+        onlyNumber.slice(0, 3) +
+        ' ' +
+        onlyNumber.slice(3, 6) +
+        ' ' +
+        onlyNumber.slice(6)
+      );
+
+    return (
+      onlyNumber.slice(0, 3) +
+      ' ' +
+      onlyNumber.slice(3, 6) +
+      ' ' +
+      onlyNumber.slice(6, 8) +
+      ' ' +
+      onlyNumber.slice(8, 10)
+    );
+  };
+
+  // Validate số điện thoại VN (10 số, bắt đầu bằng 0)
+  const validatePhone = (value) => {
+    const raw = value.replace(/\s/g, '');
+    const regex = /^0[0-9]{9}$/;
+    return regex.test(raw);
+  };
+
+  const handleChange = (text) => {
+    const formatted = formatPhone(text);
+    setPhone(formatted);
+
+    if (!validatePhone(formatted)) {
+      setError('Số điện thoại không đúng định dạng');
+    } else {
+      setError('');
+    }
+  };
+
+  const handleContinue = () => {
+    if (!validatePhone(phone)) {
+      Alert.alert(
+        'Lỗi',
+        'Số điện thoại không đúng định dạng. Vui lòng nhập lại'
+      );
+      return;
+    }
+
+    Alert.alert('Thành công', 'Số điện thoại hợp lệ!');
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Đăng nhập</Text>
+
+      <Text style={styles.label}>Nhập số điện thoại</Text>
+
+      <TextInput
+        placeholder="Nhập số điện thoại của bạn"
+        keyboardType="numeric"
+        value={phone}
+        onChangeText={handleChange}
+        maxLength={13}
+        style={[
+          styles.input,
+          error ? styles.inputError : null
+        ]}
+      />
+
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : null}
+
+      <TouchableOpacity
+        style={[
+          styles.button,
+          error ? styles.buttonDisabled : null
+        ]}
+        onPress={handleContinue}
+      >
+        <Text style={styles.buttonText}>Tiếp tục</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    padding: 20,
+    marginTop: 60,
+    backgroundColor: '#fff'
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  label: {
+    fontSize: 16,
+    marginBottom: 10
   },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 12,
+    borderRadius: 8
+  },
+  inputError: {
+    borderColor: 'red'
+  },
+  errorText: {
+    color: 'red',
+    marginTop: 5
+  },
+  button: {
+    backgroundColor: '#1E3AFF',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 20,
+    alignItems: 'center'
+  },
+  buttonDisabled: {
+    backgroundColor: '#999'
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold'
+  }
 });
